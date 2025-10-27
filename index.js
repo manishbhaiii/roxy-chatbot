@@ -4,6 +4,7 @@ import { handleChatMessage } from './chatapi.js';
 import { handleVisionMessage } from './visionapi.js';
 import { handleImageGeneration } from './imageapi.js';
 import { updateSystemPrompt, updateCoreRule, getSystemPrompt, getCoreRule } from './config.js';
+import { resetMemory, forceClearMemory } from './commands/memoryclear.js';
 
 dotenv.config();
 
@@ -37,7 +38,18 @@ const commands = [
     ),
   new SlashCommandBuilder()
     .setName('viewconfig')
-    .setDescription('View current bot configuration (Owner only)')
+    .setDescription('View current bot configuration (Owner only)'),
+  new SlashCommandBuilder()
+    .setName('reset')
+    .setDescription('Reset your chat memory with the bot'),
+  new SlashCommandBuilder()
+    .setName('forceclear')
+    .setDescription('Force clear a user\'s chat memory (Owner only)')
+    .addUserOption(option =>
+      option.setName('user')
+        .setDescription('User whose memory to clear')
+        .setRequired(true)
+    )
 ].map(command => command.toJSON());
 
 // Register slash commands
@@ -67,16 +79,18 @@ client.once(Events.ClientReady, async (c) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  // Check if user is owner
-  if (interaction.user.id !== process.env.OWNER_ID) {
-    await interaction.reply({ 
-      content: '❌ Only bot owner can use this command!', 
-      ephemeral: true 
-    });
-    return;
-  }
-
   try {
+    // Owner-only commands check
+    if (['systemprompt', 'corerule', 'viewconfig', 'forceclear'].includes(interaction.commandName)) {
+      if (interaction.user.id !== process.env.OWNER_ID) {
+        await interaction.reply({ 
+          content: '❌ Only bot owner can use this command!', 
+          ephemeral: true 
+        });
+        return;
+      }
+    }
+
     if (interaction.commandName === 'systemprompt') {
       const newPrompt = interaction.options.getString('prompt');
       
@@ -153,6 +167,39 @@ client.on(Events.InteractionCreate, async (interaction) => {
         content: `📋 **Current Bot Configuration**\n\n**System Prompt:**\n\`\`\`${systemPrompt}\`\`\`\n\n**Core Rule:**\n\`\`\`${coreRule}\`\`\``,
         ephemeral: true
       });
+    }
+    
+    else if (interaction.commandName === 'reset') {
+      const success = await resetMemory(interaction.user.id, interaction.user.username);
+      
+      if (success) {
+        await interaction.reply({
+          content: '✅ Your chat memory has been reset! Starting fresh...',
+          ephemeral: true
+        });
+      } else {
+        await interaction.reply({ 
+          content: '❌ Error resetting memory! Please try again later.',
+          ephemeral: true 
+        });
+      }
+    }
+    
+    else if (interaction.commandName === 'forceclear') {
+      const targetUser = interaction.options.getUser('user');
+      const success = await forceClearMemory(targetUser.id);
+      
+      if (success) {
+        await interaction.reply({
+          content: `✅ Chat memory for user ${targetUser.username} has been cleared!`,
+          ephemeral: true
+        });
+      } else {
+        await interaction.reply({ 
+          content: '❌ Error clearing memory! Please try again later.',
+          ephemeral: true 
+        });
+      }
     }
     
   } catch (error) {
