@@ -1,0 +1,21 @@
+{
+  "name": "discord-nvidia-bot",
+  "version": "1.0.0",
+  "description": "Advanced Discord bot with NVIDIA AI integration",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["discord", "bot", "nvidia", "ai"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "openai": "^4.67.3",
+    "axios": "^1.7.7",
+    "node-fetch": "^3.3.2"
+  }
+}
