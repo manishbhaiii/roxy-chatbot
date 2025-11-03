@@ -1,28 +1,7 @@
 {
   "1085736361052622979": {
     "username": "maki_owo",
-    "messages": [
-      {
-        "user": "[Image] Describe this image",
-        "bot": "A woman wearing a cat costume.",
-        "timestamp": "2025-10-27T17:29:57.317Z"
-      },
-      {
-        "user": "[Image] Describe this image",
-        "bot": "A CPU performance chart.",
-        "timestamp": "2025-10-27T17:31:26.918Z"
-      },
-      {
-        "user": "[Image] which gpu ?",
-        "bot": "GPU 1 NVIDIA Gef...",
-        "timestamp": "2025-10-27T17:31:45.356Z"
-      },
-      {
-        "user": "[Image] cpu is powerful or not ?",
-        "bot": "CPU Powerful.",
-        "timestamp": "2025-10-27T17:32:16.515Z"
-      }
-    ]
+    "messages": []
   },
   "1123856956780728411": {
     "username": "itz.manish",

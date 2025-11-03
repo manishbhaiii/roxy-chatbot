@@ -1,7 +1,8 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { getUserMemory, saveMemory, formatMemoryForContext } from './memory.js';
+import { saveMemory } from './memory.js';
 import { getSystemPrompt, getCoreRule } from './config.js';
+import { humanizeResponse } from './humanize.js';
 
 dotenv.config();
 
@@ -31,24 +32,20 @@ export async function handleVisionMessage(message) {
     const textContent = message.content.replace(/<@!?\d+>/g, '').trim();
     const userMessage = textContent || "Describe this image";
 
-    // Get user memory
-    const userMemory = await getUserMemory(userId, username);
-    const memoryContext = formatMemoryForContext(userMemory, username);
-
-    // Get custom prompts
+    // Get custom prompts for vision (without memory context)
     const systemPrompt = await getSystemPrompt();
     const coreRule = await getCoreRule();
 
-    // Build full context
-    const fullContext = `${systemPrompt}\n\n${coreRule}${memoryContext}`;
+    // Build vision context (without memory)
+    const visionContext = `${systemPrompt}\n\n${coreRule}\nFocus on describing what you see in the image.`;
 
     // Build messages with image
     const messages = [
-      { role: "system", content: fullContext },
+      { role: "system", content: visionContext },
       { 
         role: "user", 
         content: [
-          { type: "text", text: userMessage },
+          { type: "text", text: userMessage || "Describe this image" },
           { type: "image_url", image_url: { url: imageUrl } }
         ]
       }
@@ -77,12 +74,13 @@ export async function handleVisionMessage(message) {
 
     clearInterval(typingInterval);
 
-    const botResponse = response.data.choices[0]?.message?.content || 'Kuch samajh nahi aaya image me 😅';
+    const visionResponse = response.data.choices[0]?.message?.content || 'Kuch samajh nahi aaya image me 😅';
     
-    await message.reply(botResponse);
+    // Humanize the response
+    const humanizedResponse = await humanizeResponse(visionResponse, message);
 
     // Save to memory
-    await saveMemory(userId, username, `[Image] ${userMessage}`, botResponse);
+    await saveMemory(userId, username, `[Image] ${userMessage}`, humanizedResponse);
 
   } catch (error) {
     clearInterval(typingInterval);
