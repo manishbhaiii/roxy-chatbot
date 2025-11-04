@@ -21,8 +21,14 @@ export async function humanizeResponse(response, message) {
     const memoryContext = formatMemoryForContext(userMemory, username);
 
     // Get custom prompts
-    const systemPrompt = await getSystemPrompt();
-    const coreRule = await getCoreRule();
+    let systemPrompt, coreRule;
+    try {
+      systemPrompt = await getSystemPrompt();
+      coreRule = await getCoreRule();
+    } catch (error) {
+      console.error('Humanization failed - bot not configured:', error);
+      return response; // Return original response if not configured
+    }
 
     // Build messages array for humanization with memory context
     const messages = [
@@ -38,7 +44,7 @@ export async function humanizeResponse(response, message) {
 
     // Call NVIDIA API for humanization
     const completion = await openai.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "deepseek-ai/deepseek-v3.1-terminus",
       messages: messages,
       temperature: 1,
       top_p: 1,

@@ -48,7 +48,7 @@ export async function handleChatMessage(message) {
 
     
     const completion = await openai.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "deepseek-ai/deepseek-v3.1-terminus",
       messages: messages,
       temperature: 1,
       top_p: 1,

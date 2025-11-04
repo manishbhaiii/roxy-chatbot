@@ -33,8 +33,15 @@ export async function handleVisionMessage(message) {
     const userMessage = textContent || "Describe this image";
 
     // Get custom prompts for vision (without memory context)
-    const systemPrompt = await getSystemPrompt();
-    const coreRule = await getCoreRule();
+    let systemPrompt, coreRule;
+    try {
+      systemPrompt = await getSystemPrompt();
+      coreRule = await getCoreRule();
+    } catch (error) {
+      clearInterval(typingInterval);
+      await message.reply('Bot is not configured yet. Ask the owner to set up system prompt and core rules using /systemprompt and /corerule commands.');
+      return;
+    }
 
     // Build vision context (without memory)
     const visionContext = `${systemPrompt}\n\n${coreRule}\nFocus on describing what you see in the image.`;

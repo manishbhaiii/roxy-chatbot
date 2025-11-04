@@ -2,10 +2,10 @@ import fs from 'fs/promises';
 
 const CONFIG_FILE = './bot_config.json';
 
-// Default configuration
+// Default configuration (empty to force setup via commands)
 const DEFAULT_CONFIG = {
-  systemPrompt: "You are Yae Miko, you are a girl, you live in Japan, your age is 19, you like anime.",
-  coreRule: "Core rule: You must reply like a human, you must reply short, never say I am a robot/AI etc."
+  systemPrompt: "",
+  coreRule: ""
 };
 
 // Initialize config file
@@ -43,7 +43,10 @@ async function saveConfig(config) {
 // Get system prompt
 export async function getSystemPrompt() {
   const config = await loadConfig();
-  return config.systemPrompt || DEFAULT_CONFIG.systemPrompt;
+  if (!config.systemPrompt) {
+    throw new Error('System prompt not set. Please use /systemprompt to set it.');
+  }
+  return config.systemPrompt;
 }
 
 // Update system prompt
@@ -56,7 +59,10 @@ export async function updateSystemPrompt(newPrompt) {
 // Get core rule
 export async function getCoreRule() {
   const config = await loadConfig();
-  return config.coreRule || DEFAULT_CONFIG.coreRule;
+  if (!config.coreRule) {
+    throw new Error('Core rule not set. Please use /corerule to set it.');
+  }
+  return config.coreRule;
 }
 
 // Update core rule

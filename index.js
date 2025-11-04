@@ -73,6 +73,15 @@ async function registerCommands() {
 client.once(Events.ClientReady, async (c) => {
   console.log(`✅ Bot ready! Logged in as ${c.user.tag}`);
   await registerCommands();
+  
+  // Check if system prompt and core rule are set
+  try {
+    await getSystemPrompt();
+    await getCoreRule();
+  } catch (error) {
+    console.warn('⚠️ Warning:', error.message);
+    console.log('Please use /systemprompt and /corerule commands to set up the bot.');
+  }
 });
 
 // Handle slash commands
