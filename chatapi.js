@@ -16,37 +16,37 @@ export async function handleChatMessage(message) {
   }, 5000);
 
   try {
-    // Get user info
+    
     const userId = message.author.id;
     const username = message.author.username;
     
-    // Clean message content
+    
     const userMessage = message.content.replace(/<@!?\d+>/g, '').trim();
     
     if (!userMessage) {
       clearInterval(typingInterval);
-      await message.reply('Kuch bolo yaar! 😅');
+      await message.reply('say something');
       return;
     }
 
-    // Get user memory
+    
     const userMemory = await getUserMemory(userId, username);
     const memoryContext = formatMemoryForContext(userMemory, username);
 
-    // Get custom prompts
+    
     const systemPrompt = await getSystemPrompt();
     const coreRule = await getCoreRule();
 
-    // Build full context
+    
     const fullContext = `${systemPrompt}\n\n${coreRule}${memoryContext}`;
 
-    // Create messages array
+    
     const messages = [
       { role: "system", content: fullContext },
       { role: "user", content: userMessage }
     ];
 
-    // Call NVIDIA API
+    
     const completion = await openai.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: messages,
@@ -61,7 +61,7 @@ export async function handleChatMessage(message) {
     let lastSentTime = Date.now();
     let sentMessage = null;
 
-    // Stream response
+    
     for await (const chunk of completion) {
       const reasoning = chunk.choices[0]?.delta?.reasoning_content;
       const content = chunk.choices[0]?.delta?.content || '';
@@ -69,7 +69,7 @@ export async function handleChatMessage(message) {
       fullResponse += content;
       currentChunk += content;
 
-      // Send chunks periodically (every 2 seconds or 500 chars)
+      
       const now = Date.now();
       if (currentChunk.length >= 500 || (now - lastSentTime > 2000 && currentChunk.length > 0)) {
         if (!sentMessage) {
@@ -84,24 +84,24 @@ export async function handleChatMessage(message) {
 
     clearInterval(typingInterval);
 
-    // Send final response
+    
     if (!sentMessage) {
-      sentMessage = await message.reply(fullResponse || 'Hmm... samajh nahi aaya 🤔');
+      sentMessage = await message.reply(fullResponse || 'what ?');
     } else if (currentChunk.length > 0) {
       await sentMessage.edit(fullResponse);
     }
 
-    // Save to memory
+    
     await saveMemory(userId, username, userMessage, fullResponse);
 
   } catch (error) {
     clearInterval(typingInterval);
-    console.error('❌ Chat API error:', error);
+    console.error('Chat API error:', error);
     
     if (error.response) {
       console.error('API Response:', error.response.data);
     }
     
-    await message.reply('Oops! API me kuch problem hai. Check karo API key sahi hai ya nahi! 😓').catch(console.error);
+    await message.reply('Oops! something wrong in API').catch(console.error);
   }
 }

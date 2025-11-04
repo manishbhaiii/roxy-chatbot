@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 
 const MEMORY_FILE = './user_memory.json';
 
-// Function to save memory after changes
+
 async function saveAllMemory(memories) {
   try {
     await fs.writeFile(MEMORY_FILE, JSON.stringify(memories, null, 2));
@@ -14,7 +14,7 @@ async function saveAllMemory(memories) {
   }
 }
 
-// Reset command to clear user's own memory
+
 export async function resetMemory(userId, username) {
   try {
     const memories = await loadMemory();
@@ -26,19 +26,19 @@ export async function resetMemory(userId, username) {
       const success = await saveAllMemory(memories);
       return success;
     }
-    return true; // If user has no memory, consider it success
+    return true; 
   } catch (error) {
     console.error('❌ Error resetting memory:', error);
     return false;
   }
 }
 
-// Force clear command to clear any user's memory (owner only)
+
 export async function forceClearMemory(targetUserId) {
   try {
     const memories = await loadMemory();
     if (memories[targetUserId]) {
-      const username = memories[targetUserId].username; // Keep the username
+      const username = memories[targetUserId].username;
       memories[targetUserId] = {
         username: username,
         messages: []
@@ -46,9 +46,9 @@ export async function forceClearMemory(targetUserId) {
       const success = await saveAllMemory(memories);
       return success;
     }
-    return true; // If user has no memory, consider it success
+    return true; 
   } catch (error) {
-    console.error('❌ Error force clearing memory:', error);
+    console.error('idk what is going on', error);
     return false;
   }
 }
