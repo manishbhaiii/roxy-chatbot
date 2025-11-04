@@ -14,25 +14,25 @@ export async function handleVisionMessage(message) {
   }, 5000);
 
   try {
-    // Get user info
+    
     const userId = message.author.id;
     const username = message.author.username;
     
-    // Get image URL
+    
     const attachment = message.attachments.first();
     if (!attachment || !attachment.contentType?.startsWith('image/')) {
       clearInterval(typingInterval);
-      await message.reply('Image send karo bhai! 🖼️');
+      await message.reply(' 🖼️');
       return;
     }
 
     const imageUrl = attachment.url;
     
-    // Clean text content
+    
     const textContent = message.content.replace(/<@!?\d+>/g, '').trim();
     const userMessage = textContent || "Describe this image";
 
-    // Get custom prompts for vision (without memory context)
+    
     let systemPrompt, coreRule;
     try {
       systemPrompt = await getSystemPrompt();
@@ -43,10 +43,10 @@ export async function handleVisionMessage(message) {
       return;
     }
 
-    // Build vision context (without memory)
+    
     const visionContext = `${systemPrompt}\n\n${coreRule}\nFocus on describing what you see in the image.`;
 
-    // Build messages with image
+    
     const messages = [
       { role: "system", content: visionContext },
       { 
@@ -81,25 +81,25 @@ export async function handleVisionMessage(message) {
 
     clearInterval(typingInterval);
 
-    const visionResponse = response.data.choices[0]?.message?.content || 'Kuch samajh nahi aaya image me 😅';
+    const visionResponse = response.data.choices[0]?.message?.content || 'i can\'t see the image 😅';
     
-    // Humanize the response
+     
     const humanizedResponse = await humanizeResponse(visionResponse, message);
 
-    // Save to memory
+    
     await saveMemory(userId, username, `[Image] ${userMessage}`, humanizedResponse);
 
   } catch (error) {
     clearInterval(typingInterval);
-    console.error('❌ Vision API error:', error);
+    console.error('Vision API error:', error);
     
     if (error.response) {
       console.error('API Response:', error.response.data);
     }
     
-    let errorMsg = 'Vision API me problem hai! 😓';
+    let errorMsg = 'problem in Vision API !';
     if (error.code === 'ECONNABORTED') {
-      errorMsg = 'Request timeout ho gaya! Thoda choti image try karo.';
+      errorMsg = 'damnn';
     }
     
     await message.reply(errorMsg).catch(console.error);

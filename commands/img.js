@@ -1,24 +1,17 @@
 import fetch from 'node-fetch';
-import dotenv from 'dotenv';
 import { AttachmentBuilder } from 'discord.js';
-
-dotenv.config();
 
 const INVOKE_URL = "https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-3-medium";
 
-export async function handleImageGeneration(message, prompt) {
-  const typingInterval = setInterval(() => {
-    message.channel.sendTyping().catch(() => {});
-  }, 5000);
-
+export async function generateImage(interaction, prompt) {
   try {
     if (!prompt || prompt.trim().length === 0) {
-      clearInterval(typingInterval);
-      await message.reply('Example: `imagine a red bird flying`');
+      await interaction.reply('Example: `/img a red bird flying`');
       return;
     }
 
-    const statusMsg = await message.reply(`🎨 Generating image for: "${prompt}"`);
+    // Defer the reply to show "thinking" state
+    await interaction.deferReply();
 
     const headers = {
       "Authorization": `Bearer ${process.env.NVIDIA_API_KEY}`,
@@ -41,8 +34,6 @@ export async function handleImageGeneration(message, prompt) {
       timeout: 120000
     });
 
-    clearInterval(typingInterval);
-
     if (response.status !== 200) {
       const errBody = await response.text();
       console.error('Image API error response:', errBody);
@@ -51,47 +42,44 @@ export async function handleImageGeneration(message, prompt) {
 
     const responseBody = await response.json();
     
-    
+    let imageBuffer;
     if (responseBody.image) {
-      
-      const imageBuffer = Buffer.from(responseBody.image, 'base64');
-      const attachment = new AttachmentBuilder(imageBuffer, { 
-        name: 'generated-image.png' 
-      });
-      
-      await statusMsg.edit({ 
-        content: `🎨 Generated image for: "${prompt}"`,
-        files: [attachment] 
-      });
+      imageBuffer = Buffer.from(responseBody.image, 'base64');
     } else if (responseBody.artifacts && responseBody.artifacts.length > 0) {
-      
-      const imageBuffer = Buffer.from(responseBody.artifacts[0].base64, 'base64');
-      const attachment = new AttachmentBuilder(imageBuffer, { 
-        name: 'generated-image.png' 
-      });
-      
-      await statusMsg.edit({ 
-        content: `🎨 Generated image for: "${prompt}"`,
-        files: [attachment] 
-      });
+      imageBuffer = Buffer.from(responseBody.artifacts[0].base64, 'base64');
     } else {
       throw new Error('No image data in response');
     }
 
+    const attachment = new AttachmentBuilder(imageBuffer, { 
+      name: 'generated-image.png' 
+    });
+    
+    
+    await interaction.editReply({ 
+      content: `🎨 Generated image for: "${prompt}"`,
+      files: [attachment] 
+    });
+
   } catch (error) {
-    clearInterval(typingInterval);
     console.error('Image generation error:', error);
     
-    let errorMsg = 'something wrong 😓';
+    let errorMsg = 'Something went wrong 😓';
     
     if (error.message.includes('timeout')) {
-      errorMsg = 'try something simple.';
+      errorMsg = 'Request timed out. Try something simpler.';
     } else if (error.message.includes('429')) {
-      errorMsg = 'Rate limit';
+      errorMsg = 'Rate limit reached. Try again later.';
     } else if (error.message.includes('401')) {
-      errorMsg = 'API key invalid Check .env file.';
+      errorMsg = 'API key invalid. Check .env file.';
     }
     
-    await message.reply(errorMsg).catch(console.error);
+
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: errorMsg, ephemeral: true });
+    } else {
+      
+      await interaction.editReply({ content: errorMsg });
+    }
   }
 }

@@ -4,7 +4,7 @@ import path from 'path';
 const MEMORY_FILE = './user_memory.json';
 const MAX_MESSAGES = 5;
 
-// Initialize memory file if not exists
+
 async function initMemory() {
   try {
     await fs.access(MEMORY_FILE);
@@ -13,28 +13,28 @@ async function initMemory() {
   }
 }
 
-// Load all user memories
+
 export async function loadMemory() {
   await initMemory();
   try {
     const data = await fs.readFile(MEMORY_FILE, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    console.error('❌ Error loading memory:', error);
+    console.error('Error loading memory:', error);
     return {};
   }
 }
 
-// Save all memories
+
 async function saveAllMemory(memories) {
   try {
     await fs.writeFile(MEMORY_FILE, JSON.stringify(memories, null, 2));
   } catch (error) {
-    console.error('❌ Error saving memory:', error);
+    console.error('Error saving memory:', error);
   }
 }
 
-// Get user memory
+
 export async function getUserMemory(userId, username) {
   const memories = await loadMemory();
   if (!memories[userId]) {
@@ -43,12 +43,12 @@ export async function getUserMemory(userId, username) {
       messages: []
     };
   } else {
-    memories[userId].username = username; // Update username if changed
+    memories[userId].username = username; 
   }
   return memories[userId].messages;
 }
 
-// Save user message to memory
+
 export async function saveMemory(userId, username, userMessage, botResponse) {
   const memories = await loadMemory();
   
@@ -59,14 +59,14 @@ export async function saveMemory(userId, username, userMessage, botResponse) {
     };
   }
 
-  // Add new message pair
+  
   memories[userId].messages.push({
     user: userMessage,
     bot: botResponse,
     timestamp: new Date().toISOString()
   });
 
-  // Keep only last 5 messages
+  
   if (memories[userId].messages.length > MAX_MESSAGES) {
     memories[userId].messages = memories[userId].messages.slice(-MAX_MESSAGES);
   }
@@ -74,7 +74,7 @@ export async function saveMemory(userId, username, userMessage, botResponse) {
   await saveAllMemory(memories);
 }
 
-// Format memory for context
+
 export function formatMemoryForContext(messages, username) {
   if (!messages || messages.length === 0) return '';
   

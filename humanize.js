@@ -16,21 +16,21 @@ export async function humanizeResponse(response, message) {
     const userId = message.author.id;
     const username = message.author.username;
 
-    // Get user memory
+    
     const userMemory = await getUserMemory(userId, username);
     const memoryContext = formatMemoryForContext(userMemory, username);
 
-    // Get custom prompts
+    
     let systemPrompt, coreRule;
     try {
       systemPrompt = await getSystemPrompt();
       coreRule = await getCoreRule();
     } catch (error) {
       console.error('Humanization failed - bot not configured:', error);
-      return response; // Return original response if not configured
+      return response; 
     }
 
-    // Build messages array for humanization with memory context
+    
     const messages = [
       { 
         role: "system", 
@@ -42,7 +42,7 @@ export async function humanizeResponse(response, message) {
       }
     ];
 
-    // Call NVIDIA API for humanization
+    
     const completion = await openai.chat.completions.create({
       model: "deepseek-ai/deepseek-v3.1-terminus",
       messages: messages,
@@ -57,14 +57,14 @@ export async function humanizeResponse(response, message) {
     let lastSentTime = Date.now();
     let sentMessage = null;
 
-    // Stream response
+    
     for await (const chunk of completion) {
       const content = chunk.choices[0]?.delta?.content || '';
       
       fullResponse += content;
       currentChunk += content;
 
-      // Send chunks periodically (every 2 seconds or 500 chars)
+      
       const now = Date.now();
       if (currentChunk.length >= 500 || (now - lastSentTime > 2000 && currentChunk.length > 0)) {
         if (!sentMessage) {
@@ -77,9 +77,9 @@ export async function humanizeResponse(response, message) {
       }
     }
 
-    // Send final response if needed
+    
     if (!sentMessage) {
-      sentMessage = await message.reply(fullResponse || 'Hmm... samajh nahi aaya 🤔');
+      sentMessage = await message.reply(fullResponse || '🤔');
     } else if (currentChunk.length > 0) {
       await sentMessage.edit(fullResponse);
     }
@@ -87,7 +87,7 @@ export async function humanizeResponse(response, message) {
     return fullResponse;
 
   } catch (error) {
-    console.error('❌ Humanization error:', error);
+    console.error('Humanization error:', error);
     return response; 
   }
 }
