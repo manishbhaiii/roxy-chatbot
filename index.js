@@ -6,6 +6,7 @@ import { handleImageGeneration } from './imageapi.js';
 import { updateSystemPrompt, updateCoreRule, getSystemPrompt, getCoreRule } from './config.js';
 import { resetMemory, forceClearMemory } from './commands/memoryclear.js';
 import { generateImage } from './commands/img.js';
+import { setStatus } from './commands/status.js';
 
 dotenv.config();
 
@@ -58,6 +59,24 @@ const commands = [
       option.setName('prompt')
         .setDescription('What image would you like to generate?')
         .setRequired(true)
+    ),
+  new SlashCommandBuilder()
+    .setName('status')
+    .setDescription('Change bot status (Owner only)')
+    .addStringOption(option =>
+      option.setName('type')
+        .setDescription('Status type (online/dnd/idle)')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Online', value: 'online' },
+          { name: 'Do Not Disturb', value: 'dnd' },
+          { name: 'Idle', value: 'idle' }
+        )
+    )
+    .addStringOption(option =>
+      option.setName('message')
+        .setDescription('Custom status message')
+        .setRequired(false)
     )
 ].map(command => command.toJSON());
 
@@ -223,6 +242,21 @@ client.on(Events.InteractionCreate, async (interaction) => {
     else if (interaction.commandName === 'img') {
       const prompt = interaction.options.getString('prompt');
       await generateImage(interaction, prompt);
+    }
+
+    else if (interaction.commandName === 'status') {
+      // Check if user is owner
+      if (interaction.user.id !== process.env.OWNER_ID) {
+        await interaction.reply({ 
+          content: '❌ Only bot owner can use this command!', 
+          ephemeral: true 
+        });
+        return;
+      }
+
+      const status = interaction.options.getString('type');
+      const message = interaction.options.getString('message');
+      await setStatus(interaction, client, status, message);
     }
     
   } catch (error) {
