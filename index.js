@@ -7,6 +7,7 @@ import { updateSystemPrompt, updateCoreRule, getSystemPrompt, getCoreRule } from
 import { resetMemory, forceClearMemory } from './commands/memoryclear.js';
 import { generateImage } from './commands/img.js';
 import { setStatus } from './commands/status.js';
+import { startGitHubMonitoring } from './github-monitor.js';
 
 dotenv.config();
 
@@ -110,6 +111,9 @@ client.once(Events.ClientReady, async (c) => {
     console.warn('⚠️ Warning:', error.message);
     console.log('Please use /systemprompt and /corerule commands to set up the bot.');
   }
+
+  
+  startGitHubMonitoring(c);
 });
 
 
