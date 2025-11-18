@@ -74,7 +74,7 @@ async function notifyOwner(client, commit) {
     const embed = new EmbedBuilder()
       .setColor('#1f6feb')
       .setTitle('🚀 New Update Available')
-      .setDescription(`New changes detected in the GitHub repository!`)
+      .setDescription('visit your deshborrd `https://wispbyte.com/client/dashboard` and click on restart button to update your bot on letetst version')
       .addFields(
         {
           name: '📝 Commit Message',
@@ -90,22 +90,8 @@ async function notifyOwner(client, commit) {
           name: '🕐 Date',
           value: new Date(commit.commit.author.date).toLocaleString(),
           inline: true
-        },
-        {
-          name: '🔗 Commit SHA',
-          value: `\`${commit.sha.substring(0, 7)}\``,
-          inline: true
-        },
-        {
-          name: '📦 Repository',
-          value: `[${GITHUB_REPO}](https://github.com/${GITHUB_REPO})`,
-          inline: false
         }
       )
-      .setFooter({
-        text: 'Please update the bot at your earliest convenience!',
-        iconURL: 'https://github.githubassets.com/favicons/favicon.png'
-      })
       .setTimestamp();
 
     
