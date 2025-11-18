@@ -82,11 +82,11 @@ export async function handleVisionMessage(message) {
     clearInterval(typingInterval);
 
     const visionResponse = response.data.choices[0]?.message?.content || 'i can\'t see the image 😅';
-    
-     
+
     const humanizedResponse = await humanizeResponse(visionResponse, message);
 
-    
+    await message.reply(humanizedResponse);
+
     await saveMemory(userId, username, `[Image] ${userMessage}`, humanizedResponse);
 
   } catch (error) {

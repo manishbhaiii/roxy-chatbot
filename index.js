@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events, Partials, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, Events, Partials, REST, Routes, SlashCommandBuilder, PermissionsBitField } from 'discord.js';
 import dotenv from 'dotenv';
 import { handleChatMessage } from './chatapi.js';
 import { handleVisionMessage } from './visionapi.js';
@@ -8,6 +8,8 @@ import { resetMemory, forceClearMemory } from './commands/memoryclear.js';
 import { generateImage } from './commands/img.js';
 import { setStatus } from './commands/status.js';
 import { startGitHubMonitoring } from './github-monitor.js';
+import { isChannelDisabled } from './channels.js';
+import { runDisable, runEnable } from './commands/channel.js';
 
 dotenv.config();
 
@@ -78,7 +80,13 @@ const commands = [
       option.setName('message')
         .setDescription('Custom status message')
         .setRequired(false)
-    )
+    ),
+  new SlashCommandBuilder()
+    .setName('disable')
+    .setDescription('Disable AI replies in this channel (Admin only)'),
+  new SlashCommandBuilder()
+    .setName('enable')
+    .setDescription('Enable AI replies in this channel (Admin only)')
 ].map(command => command.toJSON());
 
 
@@ -262,6 +270,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const message = interaction.options.getString('message');
       await setStatus(interaction, client, status, message);
     }
+
+    else if (interaction.commandName === 'disable') {
+      await runDisable(interaction);
+    }
+
+    else if (interaction.commandName === 'enable') {
+      await runEnable(interaction);
+    }
     
   } catch (error) {
     console.error('Slash command error:', error);
@@ -276,6 +292,11 @@ client.on(Events.MessageCreate, async (message) => {
   try {
     
     if (message.author.bot) return;
+
+    try {
+      const disabled = await isChannelDisabled(message.channel.id);
+      if (disabled) return;
+    } catch {}
 
     const botMentioned = message.mentions.has(client.user) || 
                         message.reference?.messageId;

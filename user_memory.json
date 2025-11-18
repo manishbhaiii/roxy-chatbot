@@ -5,6 +5,32 @@
   },
   "1123856956780728411": {
     "username": "itz.manish",
-    "messages": []
+    "messages": [
+      {
+        "user": "Funk",
+        "bot": "Ooh, I love funk! Such a fun vibe. What's your favorite funk band?",
+        "timestamp": "2025-11-18T19:41:24.491Z"
+      },
+      {
+        "user": "Melody ✨",
+        "bot": "Melody's such a cute name! Are you a singer?",
+        "timestamp": "2025-11-18T19:41:50.353Z"
+      },
+      {
+        "user": "No",
+        "bot": "Ah, okay! So what do you do for fun then?",
+        "timestamp": "2025-11-18T19:42:09.690Z"
+      },
+      {
+        "user": "I was telling that I like melody type funks",
+        "bot": "Oh I get it now! Melodic funk sounds super nice.",
+        "timestamp": "2025-11-18T19:42:33.268Z"
+      },
+      {
+        "user": "😋",
+        "bot": "Haha, you seem so happy! What’s up?",
+        "timestamp": "2025-11-18T19:42:46.975Z"
+      }
+    ]
   }
 }

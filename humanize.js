@@ -49,40 +49,10 @@ export async function humanizeResponse(response, message) {
       temperature: 1,
       top_p: 1,
       max_tokens: 4096,
-      stream: true
+      stream: false
     });
 
-    let fullResponse = '';
-    let currentChunk = '';
-    let lastSentTime = Date.now();
-    let sentMessage = null;
-
-    
-    for await (const chunk of completion) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      
-      fullResponse += content;
-      currentChunk += content;
-
-      
-      const now = Date.now();
-      if (currentChunk.length >= 500 || (now - lastSentTime > 2000 && currentChunk.length > 0)) {
-        if (!sentMessage) {
-          sentMessage = await message.reply(currentChunk);
-        } else {
-          await sentMessage.edit(fullResponse);
-        }
-        currentChunk = '';
-        lastSentTime = now;
-      }
-    }
-
-    
-    if (!sentMessage) {
-      sentMessage = await message.reply(fullResponse || '🤔');
-    } else if (currentChunk.length > 0) {
-      await sentMessage.edit(fullResponse);
-    }
+    const fullResponse = completion.choices?.[0]?.message?.content || '🤔';
 
     return fullResponse;
 
