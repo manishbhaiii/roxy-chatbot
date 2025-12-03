@@ -8,8 +8,8 @@ import { resetMemory, forceClearMemory } from './commands/memoryclear.js';
 import { generateImage } from './commands/img.js';
 import { setStatus } from './commands/status.js';
 import { startGitHubMonitoring } from './github-monitor.js';
-import { isChannelDisabled } from './channels.js';
-import { runDisable, runEnable } from './commands/channel.js';
+import { isChannelDisabled, isChannelActive } from './channels.js';
+import { runDisable, runEnable, runActive, runDeactive } from './commands/channel.js';
 
 dotenv.config();
 
@@ -86,21 +86,27 @@ const commands = [
     .setDescription('Disable AI replies in this channel (Admin only)'),
   new SlashCommandBuilder()
     .setName('enable')
-    .setDescription('Enable AI replies in this channel (Admin only)')
+    .setDescription('Enable AI replies in this channel (Admin only)'),
+  new SlashCommandBuilder()
+    .setName('active')
+    .setDescription('Make bot respond to ALL messages in this channel (Admin only)'),
+  new SlashCommandBuilder()
+    .setName('deactive')
+    .setDescription('Stop auto-responding to all messages in this channel (Admin only)')
 ].map(command => command.toJSON());
 
 
 async function registerCommands() {
   try {
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-    
+
     console.log('Registering slash commands...');
-    
+
     await rest.put(
       Routes.applicationCommands(client.user.id),
       { body: commands }
     );
-    
+
     console.log('Slash commands registered successfully!');
   } catch (error) {
     console.error('Error registering commands:', error);
@@ -110,8 +116,8 @@ async function registerCommands() {
 client.once(Events.ClientReady, async (c) => {
   console.log(`Bot ready! Logged in as ${c.user.tag}`);
   await registerCommands();
-  
- 
+
+
   try {
     await getSystemPrompt();
     await getCoreRule();
@@ -120,7 +126,7 @@ client.once(Events.ClientReady, async (c) => {
     console.log('Please use /systemprompt and /corerule commands to set up the bot.');
   }
 
-  
+
   startGitHubMonitoring(c);
 });
 
@@ -129,12 +135,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   try {
-    
+
     if (['systemprompt', 'corerule', 'viewconfig', 'forceclear'].includes(interaction.commandName)) {
       if (interaction.user.id !== process.env.OWNER_ID) {
-        await interaction.reply({ 
-          content: 'Only bot owner can use this command!', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'Only bot owner can use this command!',
+          ephemeral: true
         });
         return;
       }
@@ -142,111 +148,111 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (interaction.commandName === 'systemprompt') {
       const newPrompt = interaction.options.getString('prompt');
-      
+
       if (newPrompt.length < 10) {
-        await interaction.reply({ 
-          content: 'make system prompt big (minimum 10 characters)', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'make system prompt big (minimum 10 characters)',
+          ephemeral: true
         });
         return;
       }
 
       if (newPrompt.length > 2000) {
-        await interaction.reply({ 
-          content: 'System prompt is very big (maximum 2000 characters)', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'System prompt is very big (maximum 2000 characters)',
+          ephemeral: true
         });
         return;
       }
 
       const success = await updateSystemPrompt(newPrompt);
-      
+
       if (success) {
         await interaction.reply({
           content: `✅ **System Prompt Updated!**\n\n\`\`\`${newPrompt}\`\`\`\n\nThe bot will now reply with this personality!`,
           ephemeral: true
         });
       } else {
-        await interaction.reply({ 
-          content: 'Error saving prompt! check Console.', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'Error saving prompt! check Console.',
+          ephemeral: true
         });
       }
     }
-    
+
     else if (interaction.commandName === 'corerule') {
       const newRule = interaction.options.getString('rule');
-      
+
       if (newRule.length < 10) {
-        await interaction.reply({ 
-          content: 'minimum 10 characters', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'minimum 10 characters',
+          ephemeral: true
         });
         return;
       }
 
       if (newRule.length > 1000) {
-        await interaction.reply({ 
-          content: 'maximum 1000 characters', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'maximum 1000 characters',
+          ephemeral: true
         });
         return;
       }
 
       const success = await updateCoreRule(newRule);
-      
+
       if (success) {
         await interaction.reply({
           content: `✅ **Core Rule Updated!**\n\n\`\`\`${newRule}\`\`\`\n\nThe bot will now follow these rules!`,
           ephemeral: true
         });
       } else {
-        await interaction.reply({ 
-          content: 'Error saving rule! check Console.', 
-          ephemeral: true 
+        await interaction.reply({
+          content: 'Error saving rule! check Console.',
+          ephemeral: true
         });
       }
     }
-    
+
     else if (interaction.commandName === 'viewconfig') {
       const systemPrompt = await getSystemPrompt();
       const coreRule = await getCoreRule();
-      
+
       await interaction.reply({
         content: `📋 **Current Bot Configuration**\n\n**System Prompt:**\n\`\`\`${systemPrompt}\`\`\`\n\n**Core Rule:**\n\`\`\`${coreRule}\`\`\``,
         ephemeral: true
       });
     }
-    
+
     else if (interaction.commandName === 'reset') {
       const success = await resetMemory(interaction.user.id, interaction.user.username);
-      
+
       if (success) {
         await interaction.reply({
           content: '✅ Your chat memory has been reset! Starting fresh...',
           ephemeral: true
         });
       } else {
-        await interaction.reply({ 
+        await interaction.reply({
           content: 'idk how to do that',
-          ephemeral: true 
+          ephemeral: true
         });
       }
     }
-    
+
     else if (interaction.commandName === 'forceclear') {
       const targetUser = interaction.options.getUser('user');
       const success = await forceClearMemory(targetUser.id);
-      
+
       if (success) {
         await interaction.reply({
           content: `✅ Chat memory for user ${targetUser.username} has been cleared!`,
           ephemeral: true
         });
       } else {
-        await interaction.reply({ 
+        await interaction.reply({
           content: '❌ Error clearing memory! Please try again later.',
-          ephemeral: true 
+          ephemeral: true
         });
       }
     }
@@ -259,9 +265,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     else if (interaction.commandName === 'status') {
       // Check if user is owner
       if (interaction.user.id !== process.env.OWNER_ID) {
-        await interaction.reply({ 
-          content: '❌ Only bot owner can use this command!', 
-          ephemeral: true 
+        await interaction.reply({
+          content: '❌ Only bot owner can use this command!',
+          ephemeral: true
         });
         return;
       }
@@ -278,43 +284,57 @@ client.on(Events.InteractionCreate, async (interaction) => {
     else if (interaction.commandName === 'enable') {
       await runEnable(interaction);
     }
-    
+
+    else if (interaction.commandName === 'active') {
+      await runActive(interaction);
+    }
+
+    else if (interaction.commandName === 'deactive') {
+      await runDeactive(interaction);
+    }
+
   } catch (error) {
     console.error('Slash command error:', error);
-    await interaction.reply({ 
-      content: 'something wrong 😓', 
-      ephemeral: true 
+    await interaction.reply({
+      content: 'something wrong 😓',
+      ephemeral: true
     }).catch(console.error);
   }
 });
 
 client.on(Events.MessageCreate, async (message) => {
   try {
-    
+
     if (message.author.bot) return;
 
     try {
       const disabled = await isChannelDisabled(message.channel.id);
       if (disabled) return;
-    } catch {}
+    } catch { }
 
-    const botMentioned = message.mentions.has(client.user) || 
-                        message.reference?.messageId;
-    
-   
+    // Check if channel is active (auto-reply mode)
+    let isActive = false;
+    try {
+      isActive = await isChannelActive(message.channel.id);
+    } catch { }
+
+    const botMentioned = message.mentions.has(client.user) ||
+      message.reference?.messageId;
+
+
     if (message.reference?.messageId) {
       const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
       if (repliedMessage.author.id !== client.user.id) {
-        return; 
+        return;
       }
     }
 
-    
-    if (botMentioned) {
+
+    if (botMentioned || isActive) {
       const hasImage = message.attachments.size > 0;
       const hasText = message.content.replace(/<@!?\d+>/g, '').trim().length > 0;
-      
-     
+
+
       const cleanContent = message.content.replace(/<@!?\d+>/g, '').trim();
       if (cleanContent.toLowerCase().startsWith('img ')) {
         const prompt = cleanContent.substring(8).trim();
